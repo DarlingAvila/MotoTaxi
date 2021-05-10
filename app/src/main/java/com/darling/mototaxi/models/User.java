@@ -1,4 +1,4 @@
-package com.darling.mototaxi;
+package com.darling.mototaxi.models;
 
 public class User {
 

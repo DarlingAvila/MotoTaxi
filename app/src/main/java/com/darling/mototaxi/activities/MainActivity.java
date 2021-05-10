@@ -1,4 +1,4 @@
-package com.darling.mototaxi;
+package com.darling.mototaxi.activities;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -7,6 +7,8 @@ import android.view.View;
 import android.widget.Button;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.darling.mototaxi.R;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -33,24 +35,19 @@ public class MainActivity extends AppCompatActivity {
         nButtonIAmClient.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                editor.putString( "user",  "client");
+                editor.putString("user", "client");
                 editor.apply();
-                //se crea el metodo auth
                 goToSelectAuth();
-
             }
         });
         //se hace lo mismo con lo del mototaxista para ponerle funcionalidad al boton
+
         nButtonIAmDriver.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                editor.putString( "user",  "driver");
-                //le decimos al editor que guarde el valor con apply
+                editor.putString("user", "driver");
                 editor.apply();
-                //se crea el metodo auth
                 goToSelectAuth();
-
             }
         });
     }
@@ -59,4 +56,6 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(MainActivity.this, SelectOptionAuthActivity.class);
         startActivity(intent);
     }
+
+
 }

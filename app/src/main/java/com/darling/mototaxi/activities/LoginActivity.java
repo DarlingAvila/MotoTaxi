@@ -1,4 +1,4 @@
-package com.darling.mototaxi;
+package com.darling.mototaxi.activities;
 
 import android.app.AlertDialog;
 import android.os.Bundle;
@@ -8,8 +8,9 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 
+import com.darling.mototaxi.R;
+import com.darling.mototaxi.includs.MyToolbar;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputEditText;
@@ -31,38 +32,32 @@ public class LoginActivity extends AppCompatActivity {
     DatabaseReference mDatabase;
 
     AlertDialog mDialog;
-
-    Toolbar mToolbar;
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        mToolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(mToolbar);
-        getSupportActionBar().setTitle("Login");
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-        mTextInputEmail    = findViewById(R.id.textInputEmail);
-        mTextInputPassword = findViewById(R.id.textInputPassword);
-        mButtonLogin       = findViewById(R.id.btnLogin);
-
+        MyToolbar.show(this,"login de usuario", true);
+        //instanciamos
+       mTextInputEmail = findViewById(R.id.textInputEmail);
+       mTextInputPassword = findViewById(R.id.textInputPassword);
+       mButtonLogin = findViewById(R.id.btnLogin);
+        //instanciamos
         mAuth = FirebaseAuth.getInstance();
         mDatabase = FirebaseDatabase.getInstance().getReference();
 
-        mDialog = new SpotsDialog.Builder().setContext(LoginActivity.this).setMessage("Espere un momento").build();
+      mDialog = new SpotsDialog.Builder().setContext(LoginActivity.this).setMessage("Espere un momento").build();
 
         mButtonLogin.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
+            public void onClick(View v) {
                 login();
             }
         });
     }
 
     private void login() {
+
         String email = mTextInputEmail.getText().toString();
         String password = mTextInputPassword.getText().toString();
 
@@ -90,6 +85,7 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(this, "La contraseña y el email son obligatorios", Toast.LENGTH_SHORT).show();
         }
     }
+
 
 
     /*
