@@ -9,6 +9,9 @@ import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.darling.mototaxi.R;
+import com.darling.mototaxi.activities.client.MapClientActivity;
+import com.darling.mototaxi.activities.driver.MapDriverActivity;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -50,6 +53,26 @@ public class MainActivity extends AppCompatActivity {
                 goToSelectAuth();
             }
         });
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (FirebaseAuth.getInstance().getCurrentUser() != null){
+            String user = mPref.getString("user", "");
+            if(user.equals("client")){
+                //nos envia a los mapas ya se que elija cliente o mototaxista
+                Intent intent = new Intent(MainActivity.this, MapClientActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+            }
+            else{
+                Intent intent = new Intent(MainActivity.this, MapDriverActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+            }
+
+        }
     }
 
     private void goToSelectAuth() {
