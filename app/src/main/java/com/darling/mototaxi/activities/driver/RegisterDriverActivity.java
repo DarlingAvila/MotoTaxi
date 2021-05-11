@@ -1,6 +1,7 @@
 package com.darling.mototaxi.activities.driver;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -42,8 +43,7 @@ public class RegisterDriverActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register_driver);
         //llamamos al toolbar
-
-        MyToolbar.show(this,"Registro de conductor", true);
+        MyToolbar.show(this,"Registro de Mototaxistas", true);
         //instanciamos el mauth
 
         mAuthProvider = new AuthProvider();
@@ -89,7 +89,7 @@ public class RegisterDriverActivity extends AppCompatActivity {
         }
     }
 
-    private void register(String name, String email, String password, String vehicleBrand, String vehiclePlate) {
+    private void register(final String name, String email, String password, String vehicleBrand, String vehiclePlate) {
 
         mAuthProvider.register(email,password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
             @Override
@@ -116,9 +116,10 @@ public class RegisterDriverActivity extends AppCompatActivity {
             public void onComplete(@NonNull Task<Void> task) {
                 if(task.isSuccessful()){
 
-                    Toast.makeText(RegisterDriverActivity.this, "El registro se realizo existosamente", Toast.LENGTH_SHORT).show();
-
-
+                    //Toast.makeText(RegisterDriverActivity.this, "El registro se realizo existosamente", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(RegisterDriverActivity.this, MapDriverActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
                 }
                 else{
                     Toast.makeText(RegisterDriverActivity.this, "No se pudo crear el cliente", Toast.LENGTH_SHORT).show();

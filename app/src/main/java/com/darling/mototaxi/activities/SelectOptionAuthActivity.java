@@ -48,7 +48,7 @@ public class SelectOptionAuthActivity extends AppCompatActivity {
         startActivity(intent);
     }
     private void goToRegister() {
-        String typeUser = mPref.getString("user", "");
+        String typeUser = mPref.getString("user", " ");
         if( typeUser.equals("client")){
             Intent intent = new Intent(SelectOptionAuthActivity.this, RegisterActivity.class);
             startActivity(intent);

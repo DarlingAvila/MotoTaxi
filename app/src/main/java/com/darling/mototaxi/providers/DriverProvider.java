@@ -10,7 +10,7 @@ public class DriverProvider {
     DatabaseReference mDatabase;
 
     public  DriverProvider(){
-        mDatabase = FirebaseDatabase.getInstance().getReference().child("users").child("clients");
+        mDatabase = FirebaseDatabase.getInstance().getReference().child("users").child("drivers");
     }
     public Task<Void> create(Driver driver){
         return mDatabase.child(driver.getId()).setValue(driver);

@@ -1,6 +1,8 @@
 package com.darling.mototaxi.activities;
 
 import android.app.AlertDialog;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -10,6 +12,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.darling.mototaxi.R;
+import com.darling.mototaxi.activities.client.MapClientActivity;
+import com.darling.mototaxi.activities.driver.MapDriverActivity;
 import com.darling.mototaxi.includs.MyToolbar;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -27,6 +31,7 @@ public class LoginActivity extends AppCompatActivity {
     TextInputEditText mTextInputEmail;
     TextInputEditText mTextInputPassword;
     Button mButtonLogin;
+    SharedPreferences mPref;
 
     FirebaseAuth mAuth;
     DatabaseReference mDatabase;
@@ -45,8 +50,8 @@ public class LoginActivity extends AppCompatActivity {
         //instanciamos
         mAuth = FirebaseAuth.getInstance();
         mDatabase = FirebaseDatabase.getInstance().getReference();
-
-      mDialog = new SpotsDialog.Builder().setContext(LoginActivity.this).setMessage("Espere un momento").build();
+        mPref = getApplicationContext().getSharedPreferences(  "typeUser", MODE_PRIVATE);
+        mDialog = new SpotsDialog.Builder().setContext(LoginActivity.this).setMessage("Espere un momento").build();
 
         mButtonLogin.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -68,8 +73,19 @@ public class LoginActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
-                            Toast.makeText(LoginActivity.this, "El login se realizo exitosamente", Toast.LENGTH_SHORT).show();
-                        }
+                            String user = mPref.getString("user","");
+                            if(user.equals("client")){
+                                //nos envia a los mapas ya se que elija cliente o mototaxista
+                                Intent intent = new Intent(LoginActivity.this, MapClientActivity.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                startActivity(intent);
+                            }
+                            else{
+                                Intent intent = new Intent(LoginActivity.this, MapDriverActivity.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                startActivity(intent);
+                            }
+                           }
                         else {
                             Toast.makeText(LoginActivity.this, "La contraseña o el password son incorrectos", Toast.LENGTH_SHORT).show();
                         }
