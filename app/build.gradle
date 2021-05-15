@@ -31,6 +31,7 @@ dependencies {
     implementation 'com.github.d-max:spots-dialog:1.1@aar'
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.android.gms:play-services-maps:16.1.0'
+    implementation 'com.google.android.gms:play-services-location:16.0.0'
     dependencies {
         // Import the BoM for the Firebase platform
         implementation platform('com.google.firebase:firebase-bom:26.8.0')
