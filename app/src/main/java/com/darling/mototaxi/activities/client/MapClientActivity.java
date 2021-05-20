@@ -23,7 +23,6 @@ import androidx.core.content.ContextCompat;
 
 import com.darling.mototaxi.R;
 import com.darling.mototaxi.activities.MainActivity;
-import com.darling.mototaxi.activities.driver.MapDriverActivity;
 import com.darling.mototaxi.includs.MyToolbar;
 import com.darling.mototaxi.providers.AuthProvider;
 import com.google.android.gms.location.FusedLocationProviderClient;

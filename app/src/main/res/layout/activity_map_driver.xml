@@ -16,5 +16,17 @@
         android:layout_height="match_parent"
         android:name="com.google.android.gms.maps.SupportMapFragment"/>
 
+    <Button
+        android:id="@+id/btnConnect"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Conectarse"
+        android:layout_gravity="bottom"
+        android:layout_margin="30dp"
+        android:textColor="@color/colorWhite"
+        android:background="@drawable/rounded_button"
+        android:backgroundTint="@color/colorBlueLight"
+        />
+
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
