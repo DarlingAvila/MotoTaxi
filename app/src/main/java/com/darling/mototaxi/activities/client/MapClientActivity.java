@@ -5,12 +5,15 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -25,6 +28,10 @@ import com.darling.mototaxi.R;
 import com.darling.mototaxi.activities.MainActivity;
 import com.darling.mototaxi.includs.MyToolbar;
 import com.darling.mototaxi.providers.AuthProvider;
+import com.darling.mototaxi.providers.GeoFireProvider;
+import com.firebase.geofire.GeoLocation;
+import com.firebase.geofire.GeoQueryDataEventListener;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -34,8 +41,22 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.api.net.PlacesClient;
+import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
+import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class MapClientActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -46,14 +67,48 @@ public class MapClientActivity extends AppCompatActivity implements OnMapReadyCa
 
     private LocationRequest mLocationRequest;
     private FusedLocationProviderClient mFusedLocation;
+    private GeoFireProvider mGeofireProvider;
     private final static int LOCATION_REQUEST_CODE = 1;
     private final static int SETTING_REQUEST_CODE = 2;
+
+    //icono
+    private Marker mMarker;
+    private LatLng mCurrentLatlng;
+    private List <Marker> mDriversMarkers = new ArrayList<>();
+    private boolean mIsFirstTime =true;
+    private AutocompleteSupportFragment mAutocomplete;
+    private AutocompleteSupportFragment mAutocompleteDestination;
+    private PlacesClient mPlaces;
+    //almacena el origen y destino
+    private String mOrigin;
+    private  LatLng mOriginLatLn;
+
+    private String mDestination;
+    private  LatLng mDestinationLatLn;
+
+    //lugares
+    private GoogleMap.OnCameraIdleListener mCameraListener;
+
 
     LocationCallback mLocationCallback = new LocationCallback() {
         @Override
         public void onLocationResult(LocationResult locationResult) {
             for (Location location : locationResult.getLocations()) {
                 if (getApplicationContext() != null) {
+
+                    mCurrentLatlng = new LatLng(location.getLatitude(), location.getLongitude());
+
+                    /*
+
+                    if (mMarker != null){
+                        mMarker.remove();
+                    }
+                    mMarker = mMap.addMarker(new MarkerOptions().position(
+                            new LatLng(location.getLatitude(), location.getLongitude())
+                            )
+                                    .title("tu posicion")
+                                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.iconoposicion1))
+                    ); */
                     //obtenemos la localizacion del usuario en tiempo real
                     mMap.moveCamera(CameraUpdateFactory.newCameraPosition(
                             new CameraPosition.Builder()
@@ -61,6 +116,10 @@ public class MapClientActivity extends AppCompatActivity implements OnMapReadyCa
                                     .zoom(15F)
                                     .build()
                     ));
+                    if (mIsFirstTime){
+                        mIsFirstTime= false;
+                        getActiveDriver();
+                    }
                 }
             }
         }
@@ -75,8 +134,74 @@ public class MapClientActivity extends AppCompatActivity implements OnMapReadyCa
         //con esto iniciamos o detenemos la ubicacion
         mFusedLocation = LocationServices.getFusedLocationProviderClient(this);
         //instancia a las variables
+        mGeofireProvider = new GeoFireProvider();
         mMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mMapFragment.getMapAsync(this);
+
+        if (!Places.isInitialized()){
+            Places.initialize(getApplicationContext(), getResources().getString(R.string.google_maps_key));
+        }
+        mPlaces = Places.createClient(this);
+        mAutocomplete = (AutocompleteSupportFragment) getSupportFragmentManager().findFragmentById(R.id.placeAutocompleteOrigin);
+        mAutocomplete.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.LAT_LNG, Place.Field.NAME));
+        //cambiamos nombres de los datos
+        mAutocomplete.setHint("Origen");
+        mAutocomplete.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(@NonNull Place place) {
+                //aqui haces para obtener el nombre del lugar y la latitud del lugar
+                mOrigin = place.getName();
+                mOriginLatLn = place.getLatLng();
+                Log.d("PLACE", "Name:" + mOrigin);
+                Log.d("PLACE", "Lat:" + mOriginLatLn.latitude);
+                Log.d("PLACE", "Lng:" + mOriginLatLn.longitude);
+
+            }
+
+            @Override
+            public void onError(@NonNull Status status) {
+
+            }
+        });
+        mAutocompleteDestination = (AutocompleteSupportFragment) getSupportFragmentManager().findFragmentById(R.id.placeAutocompleteDestination);
+        mAutocompleteDestination.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.LAT_LNG, Place.Field.NAME));
+        mAutocompleteDestination.setHint("Destino");
+        mAutocompleteDestination.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(@NonNull Place place) {
+                //aqui haces para obtener el nombre del lugar y la latitud del lugar
+                mDestination = place.getName();
+                mDestinationLatLn = place.getLatLng();
+                Log.d("PLACE", "Name:" + mDestination);
+                Log.d("PLACE", "Lat:" + mDestinationLatLn.latitude);
+                Log.d("PLACE", "Lng:" + mDestinationLatLn.longitude);
+
+            }
+
+            @Override
+            public void onError(@NonNull Status status) {
+
+            }
+        });
+
+        mCameraListener = new GoogleMap.OnCameraIdleListener() {
+            @Override
+            public void onCameraIdle() {
+                try {
+                    Geocoder geocoder = new Geocoder(MapClientActivity.this);
+                    mOriginLatLn = mMap.getCameraPosition().target;
+                    List<Address> addressList = geocoder.getFromLocation(mOriginLatLn.latitude, mOriginLatLn.longitude, 1);
+                    String city = addressList.get(0).getLocality();
+                    String country = addressList.get(0).getCountryName();
+                    String address = addressList.get(0).getAddressLine(0);
+                    mOrigin = address + " " + city;
+                    mAutocomplete.setText(address + " " + city);
+
+                } catch (Exception e){
+                    Log.d("Error :", "Mensaje error:" + e.getMessage());
+                }
+            }
+        };
     }
 
     @Override
@@ -87,7 +212,7 @@ public class MapClientActivity extends AppCompatActivity implements OnMapReadyCa
                 if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                     if (gpsActived()){
                         mFusedLocation.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
-
+                        mMap.setMyLocationEnabled(true);
                     } else {
                         showAlertDialogNOGPS();
                     }
@@ -108,7 +233,8 @@ public class MapClientActivity extends AppCompatActivity implements OnMapReadyCa
                 return;
             }
             mFusedLocation.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
-        } else {
+            mMap.setMyLocationEnabled(true);
+        } else if (requestCode == SETTING_REQUEST_CODE && gpsActived()){
             showAlertDialogNOGPS();
         }
     }
@@ -146,6 +272,7 @@ public class MapClientActivity extends AppCompatActivity implements OnMapReadyCa
                 if (gpsActived()){
 
                     mFusedLocation.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
+                    mMap.setMyLocationEnabled(true);
                 }
                 else {
                     showAlertDialogNOGPS();
@@ -158,7 +285,7 @@ public class MapClientActivity extends AppCompatActivity implements OnMapReadyCa
             if (gpsActived()){
 
                 mFusedLocation.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
-
+                mMap.setMyLocationEnabled(true);
             }
             else {
                 showAlertDialogNOGPS();
@@ -189,11 +316,82 @@ public class MapClientActivity extends AppCompatActivity implements OnMapReadyCa
         }
     }
 
-    @Override
+    private void getActiveDriver(){
+        mGeofireProvider.getActiveDriver(mCurrentLatlng).addGeoQueryDataEventListener(new GeoQueryDataEventListener() {
+            @Override
+            public void onDataEntered(DataSnapshot dataSnapshot, GeoLocation location) {
+
+                //añadiremos los  marcares de los mototaxistas que se conecten en la app
+                for( Marker marker: mDriversMarkers){
+                    if (marker.getTag() != null){
+                        if (marker.getTag().equals(dataSnapshot)){
+                            return;
+                        }
+                    }
+                }
+                LatLng driverLatLng = new LatLng(location.latitude, location.longitude);
+                Marker marker = mMap.addMarker(new MarkerOptions().position(driverLatLng).title("Mototaxi Disponible").icon(BitmapDescriptorFactory.fromResource(R.drawable.iconomoto)));
+                marker.setTag(dataSnapshot);
+                mDriversMarkers.add(marker);
+            }
+
+            @Override
+            public void onDataExited(DataSnapshot dataSnapshot) {
+
+                //añadiremos los  marcares de los mototaxistas que se conecten en la app
+                for( Marker marker: mDriversMarkers){
+                    if (marker.getTag() != null){
+                        if (marker.getTag().equals(dataSnapshot)){
+                            marker.remove();
+                            mDriversMarkers.remove(marker);
+                            return;
+                        }
+                    }
+                }
+
+            }
+
+            @Override
+            public void onDataMoved(DataSnapshot dataSnapshot, GeoLocation location) {
+                //actualizar la posicion de los mototaxis
+
+                //añadiremos los  marcares de los mototaxistas que se conecten en la app
+                for( Marker marker: mDriversMarkers){
+                    if (marker.getTag() != null){
+                        if (marker.getTag().equals(dataSnapshot)){
+                            marker.setPosition(new LatLng(location.latitude, location.longitude));
+                        }
+                    }
+                }
+
+            }
+
+            @Override
+            public void onDataChanged(DataSnapshot dataSnapshot, GeoLocation location) {
+
+            }
+
+            @Override
+            public void onGeoQueryReady() {
+
+            }
+
+            @Override
+            public void onGeoQueryError(DatabaseError error) {
+
+            }
+        });
+
+    }
+
+
+        @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         mMap.getUiSettings().setZoomControlsEnabled(true);
+
+        mMap.setOnCameraIdleListener(mCameraListener);
         mLocationRequest = new LocationRequest();
         //es el intervalo de tiempo que se estara actualizando la ubicacion
         mLocationRequest.setInterval(1000);

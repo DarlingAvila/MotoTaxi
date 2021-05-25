@@ -15,6 +15,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,6 +28,7 @@ import com.darling.mototaxi.R;
 import com.darling.mototaxi.activities.MainActivity;
 import com.darling.mototaxi.includs.MyToolbar;
 import com.darling.mototaxi.providers.AuthProvider;
+import com.darling.mototaxi.providers.GeoFireProvider;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -47,6 +49,7 @@ public class MapDriverActivity extends AppCompatActivity implements OnMapReadyCa
     private GoogleMap mMap;
     private SupportMapFragment mMapFragment;
     private AuthProvider mAuthProvider;
+    private GeoFireProvider mGeoFireProvider;
 
     private LocationRequest mLocationRequest;
     private FusedLocationProviderClient mFusedLocation;
@@ -59,11 +62,15 @@ public class MapDriverActivity extends AppCompatActivity implements OnMapReadyCa
     //para las conexion y desconexion
     private boolean mIsConnect = false;
 
+    private LatLng mCurrentLatlng;
+
     LocationCallback mLocationCallback = new LocationCallback() {
         @Override
         public void onLocationResult(LocationResult locationResult) {
             for (Location location : locationResult.getLocations()) {
                 if (getApplicationContext() != null) {
+
+                    mCurrentLatlng = new LatLng(location.getLatitude(), location.getLongitude());
 
                     //eliminamos para que no aparezca varias veces la imag
                     if (mMarker != null){
@@ -82,10 +89,23 @@ public class MapDriverActivity extends AppCompatActivity implements OnMapReadyCa
                                     .zoom(15F)
                                     .build()
                     ));
+
+                    updateLocation();
                 }
             }
         }
     };
+
+    private void updateLocation() {
+
+        if (mAuthProvider.existSession() && mCurrentLatlng != null){
+            mGeoFireProvider.saveLocation(mAuthProvider.getId(), mCurrentLatlng);
+
+        }
+
+
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,7 +115,9 @@ public class MapDriverActivity extends AppCompatActivity implements OnMapReadyCa
         mAuthProvider = new AuthProvider();
         //con esto iniciamos o detenemos la ubicacion
         mFusedLocation = LocationServices.getFusedLocationProviderClient(this);
+
         //instancia a las variables
+        mGeoFireProvider = new GeoFireProvider();
         mMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mMapFragment.getMapAsync(this);
         mButtonConnect = findViewById(R.id.btnConnect);
@@ -175,10 +197,18 @@ public class MapDriverActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     public  void disconnect(){
-        mButtonConnect.setText("Conectarse");
-        mIsConnect = false;
+
         if (mFusedLocation != null){
+            mButtonConnect.setText("Conectarse");
+            mIsConnect = false;
             mFusedLocation.removeLocationUpdates(mLocationCallback);
+            if (mAuthProvider.existSession()){
+                mGeoFireProvider.removeLocation(mAuthProvider.getId());
+
+            }
+        }
+        else {
+            Toast.makeText(this, "No te puedes desconectar", Toast.LENGTH_SHORT).show();
         }
 
     }
@@ -250,7 +280,7 @@ public class MapDriverActivity extends AppCompatActivity implements OnMapReadyCa
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationRequest.setSmallestDisplacement(5);
 
-        startLocation();
+
     }
 
     @Override
@@ -268,6 +298,7 @@ public class MapDriverActivity extends AppCompatActivity implements OnMapReadyCa
         return  super.onOptionsItemSelected(item);
     }
     void logout(){
+        disconnect();
         mAuthProvider.logout();
         //al momento de cerrar sesion nos envia al mainactivity
         Intent intent = new Intent(MapDriverActivity.this, MainActivity.class);
