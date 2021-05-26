@@ -48,11 +48,13 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.api.model.RectangularBounds;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.maps.android.SphericalUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -119,6 +121,7 @@ public class MapClientActivity extends AppCompatActivity implements OnMapReadyCa
                     if (mIsFirstTime){
                         mIsFirstTime= false;
                         getActiveDriver();
+                        limitSearch();
                     }
                 }
             }
@@ -142,6 +145,49 @@ public class MapClientActivity extends AppCompatActivity implements OnMapReadyCa
             Places.initialize(getApplicationContext(), getResources().getString(R.string.google_maps_key));
         }
         mPlaces = Places.createClient(this);
+
+        //llamamos a los metodos
+        instanceAutoCompleteOrigin();
+        instanceAutoCompleteDestination();
+        onCameraMove();;
+
+    }
+
+    //limitar por regiones
+    private void limitSearch(){
+        LatLng northSide = SphericalUtil.computeOffset(mCurrentLatlng, 5000, 0);
+        LatLng southSide = SphericalUtil.computeOffset(mCurrentLatlng, 5000, 180);
+        //estbleccer el pais
+        mAutocomplete.setCountry("Mex");
+        mAutocomplete.setLocationBias(RectangularBounds.newInstance(southSide, northSide));
+        mAutocompleteDestination.setCountry("Mex");
+        mAutocompleteDestination.setLocationBias(RectangularBounds.newInstance(southSide, northSide));
+
+    }
+
+    private void onCameraMove(){
+        mCameraListener = new GoogleMap.OnCameraIdleListener() {
+            @Override
+            public void onCameraIdle() {
+                try {
+                    Geocoder geocoder = new Geocoder(MapClientActivity.this);
+                    mOriginLatLn = mMap.getCameraPosition().target;
+                    List<Address> addressList = geocoder.getFromLocation(mOriginLatLn.latitude, mOriginLatLn.longitude, 1);
+                    String city = addressList.get(0).getLocality();
+                    String country = addressList.get(0).getCountryName();
+                    String address = addressList.get(0).getAddressLine(0);
+                    mOrigin = address + " " + city;
+                    mAutocomplete.setText(address + " " + city);
+
+                } catch (Exception e){
+                    Log.d("Error :", "Mensaje error:" + e.getMessage());
+                }
+            }
+        };
+    }
+
+    private void instanceAutoCompleteOrigin(){
+
         mAutocomplete = (AutocompleteSupportFragment) getSupportFragmentManager().findFragmentById(R.id.placeAutocompleteOrigin);
         mAutocomplete.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.LAT_LNG, Place.Field.NAME));
         //cambiamos nombres de los datos
@@ -163,6 +209,11 @@ public class MapClientActivity extends AppCompatActivity implements OnMapReadyCa
 
             }
         });
+
+    }
+
+    public void instanceAutoCompleteDestination(){
+
         mAutocompleteDestination = (AutocompleteSupportFragment) getSupportFragmentManager().findFragmentById(R.id.placeAutocompleteDestination);
         mAutocompleteDestination.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.LAT_LNG, Place.Field.NAME));
         mAutocompleteDestination.setHint("Destino");
@@ -184,24 +235,6 @@ public class MapClientActivity extends AppCompatActivity implements OnMapReadyCa
             }
         });
 
-        mCameraListener = new GoogleMap.OnCameraIdleListener() {
-            @Override
-            public void onCameraIdle() {
-                try {
-                    Geocoder geocoder = new Geocoder(MapClientActivity.this);
-                    mOriginLatLn = mMap.getCameraPosition().target;
-                    List<Address> addressList = geocoder.getFromLocation(mOriginLatLn.latitude, mOriginLatLn.longitude, 1);
-                    String city = addressList.get(0).getLocality();
-                    String country = addressList.get(0).getCountryName();
-                    String address = addressList.get(0).getAddressLine(0);
-                    mOrigin = address + " " + city;
-                    mAutocomplete.setText(address + " " + city);
-
-                } catch (Exception e){
-                    Log.d("Error :", "Mensaje error:" + e.getMessage());
-                }
-            }
-        };
     }
 
     @Override
