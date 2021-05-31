@@ -16,6 +16,9 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -91,6 +94,8 @@ public class MapClientActivity extends AppCompatActivity implements OnMapReadyCa
     //lugares
     private GoogleMap.OnCameraIdleListener mCameraListener;
 
+    private Button mButtonRequestDriver;
+
 
     LocationCallback mLocationCallback = new LocationCallback() {
         @Override
@@ -140,6 +145,7 @@ public class MapClientActivity extends AppCompatActivity implements OnMapReadyCa
         mGeofireProvider = new GeoFireProvider();
         mMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mMapFragment.getMapAsync(this);
+        mButtonRequestDriver = findViewById(R.id.btnRequestDriver);
 
         if (!Places.isInitialized()){
             Places.initialize(getApplicationContext(), getResources().getString(R.string.google_maps_key));
@@ -149,8 +155,30 @@ public class MapClientActivity extends AppCompatActivity implements OnMapReadyCa
         //llamamos a los metodos
         instanceAutoCompleteOrigin();
         instanceAutoCompleteDestination();
-        onCameraMove();;
+        onCameraMove();
 
+        mButtonRequestDriver.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                requestDriver();
+            }
+        });
+
+    }
+
+    private void requestDriver() {
+
+        if( mOriginLatLn != null  && mDestinationLatLn != null ){
+            Intent intent = new Intent(MapClientActivity.this, DetailRequestActivity.class);
+            intent.putExtra("origin_lat", mOriginLatLn.latitude);
+            intent.putExtra("origin_lng", mOriginLatLn.longitude);
+            intent.putExtra("destination_lat", mDestinationLatLn.longitude);
+            intent.putExtra("destination_lng", mDestinationLatLn.longitude);
+            startActivity(intent);
+        }
+        else {
+            Toast.makeText(this,"Selecciona el lugar de recogida y el destino", Toast.LENGTH_SHORT).show();
+        }
     }
 
     //limitar por regiones
@@ -423,8 +451,8 @@ public class MapClientActivity extends AppCompatActivity implements OnMapReadyCa
         mMap = googleMap;
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         mMap.getUiSettings().setZoomControlsEnabled(true);
-
         mMap.setOnCameraIdleListener(mCameraListener);
+
         mLocationRequest = new LocationRequest();
         //es el intervalo de tiempo que se estara actualizando la ubicacion
         mLocationRequest.setInterval(1000);
