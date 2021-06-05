@@ -172,7 +172,7 @@ public class MapClientActivity extends AppCompatActivity implements OnMapReadyCa
             Intent intent = new Intent(MapClientActivity.this, DetailRequestActivity.class);
             intent.putExtra("origin_lat", mOriginLatLn.latitude);
             intent.putExtra("origin_lng", mOriginLatLn.longitude);
-            intent.putExtra("destination_lat", mDestinationLatLn.longitude);
+            intent.putExtra("destination_lat", mDestinationLatLn.latitude);
             intent.putExtra("destination_lng", mDestinationLatLn.longitude);
             startActivity(intent);
         }
