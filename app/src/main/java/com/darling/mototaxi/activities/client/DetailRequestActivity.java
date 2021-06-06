@@ -1,19 +1,35 @@
 package com.darling.mototaxi.activities.client;
 
+import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.darling.mototaxi.R;
 import com.darling.mototaxi.includs.MyToolbar;
+import com.darling.mototaxi.providers.GoogleApiProvider;
+import com.darling.mototaxi.utils.DecodePoints;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.JointType;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.maps.model.SquareCap;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class DetailRequestActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -28,7 +44,10 @@ public class DetailRequestActivity extends AppCompatActivity implements OnMapRea
 
     private LatLng mOriginLatLng;
     private LatLng mDestinationLatLng;
+    private GoogleApiProvider mGoogleApiProvider;
 
+    private List<LatLng> mPolylineList;
+    private PolylineOptions mPolylineOptions;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,9 +66,46 @@ public class DetailRequestActivity extends AppCompatActivity implements OnMapRea
         mOriginLatLng = new LatLng(mExtraOriginLat, mExtraOriginLng);
         mDestinationLatLng = new LatLng(mExtraDestinationLat, mExtraDestinationLng);
 
+        mGoogleApiProvider  = new GoogleApiProvider( DetailRequestActivity.this);
+
 
     }
+ //metodo para dibujar la ruta del clientexd
+    private void drawRoute(){
+        mGoogleApiProvider.getDirection(mOriginLatLng, mDestinationLatLng).enqueue(new Callback<String>() {
+            @Override
+            //aqui recibimos la respuesta del servidor
+            public void onResponse(Call<String> call, Response<String> response) {
 
+                try {
+                    JSONObject jsonObject = new JSONObject(response.body());
+                    JSONArray jsonArray = jsonObject.getJSONArray("routes");
+                    JSONObject route = jsonArray.getJSONObject(0);
+                    JSONObject polylines = route.getJSONObject("overview_polyline");
+                    String points = polylines.getString("points");
+                    mPolylineList = DecodePoints.decodePoly(points);
+                    mPolylineOptions = new PolylineOptions();
+                    mPolylineOptions.color(Color.DKGRAY);
+                    mPolylineOptions.width(10f);
+                    mPolylineOptions.startCap(new SquareCap());
+                    mPolylineOptions.jointType(JointType.ROUND);
+                    mPolylineOptions.addAll(mPolylineList);
+                    mMap.addPolyline(mPolylineOptions);
+                } catch (Exception e){
+                    Log.d("Error", "Error encontrado" + e.getMessage());
+
+                }
+
+            }
+
+            @Override
+            //se ejecutara si falla
+            public void onFailure(Call<String> call, Throwable t) {
+
+            }
+        });
+
+    }
     @Override
     public void onMapReady(GoogleMap googleMap) {
 
@@ -66,5 +122,7 @@ public class DetailRequestActivity extends AppCompatActivity implements OnMapRea
                 .zoom(15f)
                 .build()
         ));
+
+        drawRoute();
     }
 }
