@@ -3,6 +3,7 @@ package com.darling.mototaxi.activities.client;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -42,12 +43,20 @@ public class DetailRequestActivity extends AppCompatActivity implements OnMapRea
     private double mExtraDestinationLat;
     private double mExtraDestinationLng;
 
+    private String mExtraOrigin;
+    private String mExtraDestination;
+
     private LatLng mOriginLatLng;
     private LatLng mDestinationLatLng;
     private GoogleApiProvider mGoogleApiProvider;
 
     private List<LatLng> mPolylineList;
     private PolylineOptions mPolylineOptions;
+
+    private TextView mTextViewOrigin;
+    private TextView mTextViewDestination;
+    private TextView mTextViewTime;
+    private TextView mTextViewDistance;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,13 +71,22 @@ public class DetailRequestActivity extends AppCompatActivity implements OnMapRea
         mExtraOriginLng = getIntent().getDoubleExtra("origin_lng", 0);
         mExtraDestinationLat = getIntent().getDoubleExtra("destination_lat", 0);
         mExtraDestinationLng = getIntent().getDoubleExtra("destination_lng", 0);
+        mExtraOrigin = getIntent().getStringExtra("origin");
+        mExtraDestination = getIntent().getStringExtra("destination");
 
         mOriginLatLng = new LatLng(mExtraOriginLat, mExtraOriginLng);
         mDestinationLatLng = new LatLng(mExtraDestinationLat, mExtraDestinationLng);
 
         mGoogleApiProvider  = new GoogleApiProvider( DetailRequestActivity.this);
 
+        mTextViewOrigin = findViewById(R.id.textViewOrigin);
+        mTextViewDestination = findViewById(R.id.textViewDestination);
+        mTextViewTime = findViewById(R.id.textViewTime);
+        mTextViewDistance = findViewById(R.id.textViewDistance);
 
+        //establecemos a los text el origin y destino
+        mTextViewOrigin.setText(mExtraOrigin);
+        mTextViewDestination.setText(mExtraDestination);
     }
  //metodo para dibujar la ruta del clientexd
     private void drawRoute(){
@@ -91,6 +109,16 @@ public class DetailRequestActivity extends AppCompatActivity implements OnMapRea
                     mPolylineOptions.jointType(JointType.ROUND);
                     mPolylineOptions.addAll(mPolylineList);
                     mMap.addPolyline(mPolylineOptions);
+
+                    JSONArray legs =  route.getJSONArray("legs");
+                    JSONObject leg = legs.getJSONObject(0);
+                    JSONObject distance = leg.getJSONObject("distance");
+                    JSONObject duration = leg.getJSONObject("duration");
+                    String distanceText = distance.getString("text");
+                    String durationText = duration.getString("text");
+                    mTextViewTime.setText(durationText);
+                    mTextViewDistance.setText(distanceText);
+
                 } catch (Exception e){
                     Log.d("Error", "Error encontrado" + e.getMessage());
 
