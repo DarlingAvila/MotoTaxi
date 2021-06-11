@@ -1,8 +1,11 @@
 package com.darling.mototaxi.activities.client;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -58,6 +61,8 @@ public class DetailRequestActivity extends AppCompatActivity implements OnMapRea
     private TextView mTextViewTime;
     private TextView mTextViewDistance;
 
+    private Button mButtonRequest;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -84,11 +89,28 @@ public class DetailRequestActivity extends AppCompatActivity implements OnMapRea
         mTextViewTime = findViewById(R.id.textViewTime);
         mTextViewDistance = findViewById(R.id.textViewDistance);
 
+        mButtonRequest = findViewById(R.id.btnRequestNow);
         //establecemos a los text el origin y destino
         mTextViewOrigin.setText(mExtraOrigin);
         mTextViewDestination.setText(mExtraDestination);
+
+        mButtonRequest.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                goToRequestDriver();
+            }
+        });
+
     }
- //metodo para dibujar la ruta del clientexd
+
+    private void goToRequestDriver() {
+
+        Intent intent = new Intent(DetailRequestActivity.this, RequesDriverActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+    //metodo para dibujar la ruta del clientexd
     private void drawRoute(){
         mGoogleApiProvider.getDirection(mOriginLatLng, mDestinationLatLng).enqueue(new Callback<String>() {
             @Override
