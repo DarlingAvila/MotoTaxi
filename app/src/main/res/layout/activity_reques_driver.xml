@@ -17,7 +17,7 @@
             android:layout_width="wrap_content"
             android:layout_height="200dp"
             app:lottie_imageAssetsFolder="assets"
-            app:lottie_fileName="3532-car.json"
+            app:lottie_fileName="animation.json"
             android:layout_gravity="center"
             app:lottie_loop="true"
             android:scaleType="centerCrop"

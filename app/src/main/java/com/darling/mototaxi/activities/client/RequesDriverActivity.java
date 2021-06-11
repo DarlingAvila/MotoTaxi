@@ -15,15 +15,15 @@ public class RequesDriverActivity extends AppCompatActivity {
     private LottieAnimationView mAnimation;
     private TextView mTextViewLookingFor;
     private Button mButtonCancelRequest;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_reques_driver);
 
-
-        mAnimation.findViewById(R.id.animation);
-        mTextViewLookingFor.findViewById(R.id.textViewLookingFor);
-        mButtonCancelRequest.findViewById(R.id.btnCancelRequest);
+        mAnimation = findViewById(R.id.animation);
+        mTextViewLookingFor = findViewById(R.id.textViewLookingFor);
+        mButtonCancelRequest = findViewById(R.id.btnCancelRequest);
 
         mAnimation.playAnimation();
     }
