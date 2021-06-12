@@ -61,7 +61,7 @@ public class RequesDriverActivity extends AppCompatActivity {
 
                 if (!mDriverFound) {
                     mDriverFound = true;
-                    mIdDriverFound = DataSnapshot;
+                    mIdDriverFound = String.valueOf(dataSnapshot);
                     mDriverFoundLatLng = new LatLng(location.latitude, location.longitude);
                     mTextViewLookingFor.setText("MOTOTAXI ENCONTRADO\nESPERANDO RESPUESTA");
                     //createClientBooking();
