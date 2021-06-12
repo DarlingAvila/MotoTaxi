@@ -381,7 +381,7 @@ public class MapClientActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     private void getActiveDriver(){
-        mGeofireProvider.getActiveDriver(mCurrentLatlng).addGeoQueryDataEventListener(new GeoQueryDataEventListener() {
+        mGeofireProvider.getActiveDriver(mCurrentLatlng, 10).addGeoQueryDataEventListener(new GeoQueryDataEventListener() {
             @Override
             public void onDataEntered(DataSnapshot dataSnapshot, GeoLocation location) {
 
